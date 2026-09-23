@@ -41,7 +41,7 @@ python3 examples/golden_cross_synthetic.py
 - Long-only, fully invested-or-cash. No leverage, no shorting. No commissions, no slippage, no taxes — real trading will do worse by roughly those costs.
 - Use dividend/split-adjusted closes or your returns will be wrong.
 
-> **Correction note (v0.2.0):** v0.1.0 credited each new position with the signal bar's own price move. That is look-ahead bias — the signal only exists after the bar closes — so v0.1.0 results were overstated. v0.2.0 fixes the execution timing and adds regression tests pinning the corrected behavior. If you published numbers computed with v0.1.0, re-run them.
+> **Correction note (v0.2.0):** v0.1.0 credited each new position with the signal bar's own price move. That is look-ahead bias — the signal only exists after the bar closes — so v0.1.0 results were biased and unreliable, and must be re-run. (Note: "biased" does not always mean "overstated" — the old loop also dropped exit-bar returns, so on some datasets the corrected run comes out higher.) v0.2.0 fixes the execution timing and adds regression tests pinning the corrected behavior. If you published numbers computed with v0.1.0, re-run them.
 
 ## Data
 
