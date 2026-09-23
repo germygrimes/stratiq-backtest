@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stratiq-backtest"
+version = "0.1.0"
+description = "A tiny, honest backtesting engine: long-only signal backtests with full trade logs and buy-and-hold comparison."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "StratIQ" }]
+keywords = ["backtest", "trading", "quant", "systematic"]
+
+[project.urls]
+Homepage = "https://stratiqai.app/track-record"
+Repository = "https://github.com/germygrimes/stratiq-backtest"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["stratiq_backtest*"]
