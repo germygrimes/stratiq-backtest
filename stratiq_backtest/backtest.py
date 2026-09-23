@@ -2,10 +2,14 @@
 
 Methodology (documented so every number is auditable):
 - Long-only, fully invested-or-cash. No leverage, no shorting.
-- The strategy sees bar i's close, then trades AT bar i's close.
-  The new position earns returns starting with bar i's own move.
-  (Conservative alternative: enter at the next bar — we document our
-  choice instead of hiding it.)
+- Trades execute AT the close of the bar that generates the signal:
+  the strategy sees bar i's close, the trade prints at bar i's close.
+- NO look-ahead: a position entered on bar i does NOT earn bar i's
+  return (that move already happened before the trade printed). It
+  starts earning on bar i+1. A position exited on bar i DOES earn
+  bar i's return (it was exposed during the bar, sold at its close).
+  NOTE: v0.1.0 credited the signal bar's own return to the new
+  position — that was a look-ahead error, fixed in v0.2.0.
 - No commissions, no slippage, no taxes are modeled. Real trading
   will do worse than these numbers by roughly those costs.
 - Use dividend/split-adjusted closes or your returns will be wrong.
@@ -48,8 +52,9 @@ class Strategy:
     """Decide the position after seeing bar i's close.
 
     on_bar(i, data, position) -> new position (0 = cash, 1 = long).
-    Strategies may keep state between bars; reset() is called before
-    each run.
+    The returned position takes effect after bar i's close (see the
+    no-look-ahead rule above). Strategies may keep state between bars;
+    reset() is called before each run.
     """
 
     def reset(self):
@@ -73,6 +78,16 @@ def run(data: BarData, strategy: Strategy, warmup: int) -> BacktestResult:
     in_market = 0
 
     for i in range(n):
+        # 1) The position held DURING bar i earns bar i's return.
+        if position == 1:
+            in_market += 1
+            equity.append(equity[-1] * (closes[i] / closes[i - 1] if i > 0 else 1.0))
+        else:
+            equity.append(equity[-1])
+        # 2) Then the strategy reacts to bar i's close. A change takes
+        # effect after the close: an entry printed at closes[i] starts
+        # earning on bar i+1 (no look-ahead); an exit printed at
+        # closes[i] keeps the return already earned during bar i.
         if i >= warmup:
             want = strategy.on_bar(i, data, position)
             if want not in (0, 1):
@@ -94,11 +109,7 @@ def run(data: BarData, strategy: Strategy, warmup: int) -> BacktestResult:
                         )
                     )
                     position = 0
-        if position == 1:
-            in_market += 1
-            equity.append(equity[-1] * (closes[i] / closes[i - 1] if i > 0 else 1.0))
-        else:
-            equity.append(equity[-1])
+                    entry_px = entry_date = None
 
     # Close any open position at the final close so equity is comparable.
     if position == 1:

@@ -9,8 +9,8 @@ from .backtest import BarData
 
 
 def load_json(path) -> BarData:
-    """Load {"dates": [...], "closes": [...]} or the StratIQ sample
-    format {"ts": [unix timestamps], "adj": [adjusted closes]}."""
+    """Load {"dates": [...], "closes": [...]} or the compact
+    {"ts": [unix timestamps], "adj": [adjusted closes]} format."""
     with open(path) as f:
         d = json.load(f)
     if "ts" in d and "adj" in d:

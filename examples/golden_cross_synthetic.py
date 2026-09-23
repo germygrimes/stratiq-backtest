@@ -1,14 +1,13 @@
-"""Golden cross on QQQ (2019-2026) — the same backtest StratIQ publishes.
+"""Golden cross on synthetic data — a reproducible demo of the engine.
 
 Buy when the 50-day SMA crosses above the 200-day SMA, sell (to cash)
 when it crosses back below. Long-only, fully invested, trades at the
-close, dividend/split-adjusted data.
+close.
 
-This engine is verified trade-for-trade against StratIQ's internal
-backtest script on the same data. (Published track-record figures
-reflect the data vintage at publication time — re-running any backtest
-on refreshed data can shift knife-edge signals, which is itself an
-honest lesson about backtests.)
+The data is SYNTHETIC (a seeded random walk): the numbers below show
+the engine's mechanics, not a claim about any real market. For real
+data, use fetch_stooq() for quick experiments or load your own
+dividend/split-adjusted closes before publishing anything.
 """
 import json
 import os
@@ -18,16 +17,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from stratiq_backtest import (  # noqa: E402
     CrossoverStrategy,
-    load_json,
     run,
     summarize,
+    synthetic_bars,
 )
-
-DATA = os.path.join(os.path.dirname(__file__), "..", "data", "qqq_2019_2026.json")
 
 
 def main():
-    data = load_json(DATA)
+    data = synthetic_bars(n=1500, seed=42)
+    print("data: SYNTHETIC (seeded random walk) — demo only, not real market data")
     strat = CrossoverStrategy(fast=50, slow=200)
     result = run(data, strat, warmup=strat.warmup)
     out = summarize(data, result)

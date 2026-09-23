@@ -10,6 +10,7 @@ from .data import fetch_stooq, load_csv, load_json
 from .indicators import atr_series, ema_series, rsi_series, sma
 from .stats import max_drawdown, summarize
 from .strategy import CrossoverStrategy
+from .synthetic import synthetic_bars
 
 __all__ = [
     "BarData",
@@ -27,6 +28,7 @@ __all__ = [
     "run",
     "sma",
     "summarize",
+    "synthetic_bars",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

@@ -15,9 +15,9 @@ Or from source: `pip install .` — zero dependencies, stdlib only.
 ## Quickstart
 
 ```python
-from stratiq_backtest import CrossoverStrategy, fetch_stooq, run, summarize
+from stratiq_backtest import CrossoverStrategy, run, summarize, synthetic_bars
 
-data = fetch_stooq("QQQ", start="2019-01-01")
+data = synthetic_bars(n=1500, seed=42)   # reproducible demo data (NOT real market data)
 strat = CrossoverStrategy(fast=50, slow=200)   # golden cross
 result = run(data, strat, warmup=strat.warmup)
 stats = summarize(data, result)
@@ -28,17 +28,28 @@ for t in stats["trades"]:
     print(t)
 ```
 
-Run the bundled example (golden cross on QQQ, 2019–2026, dividend-adjusted sample data included):
+Run the bundled example (golden cross on synthetic data):
 
 ```bash
-python3 examples/golden_cross_qqq.py
+python3 examples/golden_cross_synthetic.py
 ```
 
-The engine is verified trade-for-trade against StratIQ's internal backtest
-script on the same data. One honest caveat you'll notice across the industry:
-re-running a backtest on refreshed data can shift knife-edge signals (a single
-cross appearing or vanishing changes the whole result). We pin the sample data
-in this repo so the example is reproducible forever.
+## Execution semantics (read this before trusting a number)
+
+- **Trades print at the close of the bar that generates the signal.** The strategy sees bar *i*'s close; the trade executes at bar *i*'s close.
+- **No look-ahead, ever.** A position entered on bar *i* does **not** earn bar *i*'s return — that move already happened before the trade printed. It starts earning on bar *i+1*. A position exited on bar *i* **does** earn bar *i*'s return (it was exposed during the bar, sold at its close).
+- Long-only, fully invested-or-cash. No leverage, no shorting. No commissions, no slippage, no taxes — real trading will do worse by roughly those costs.
+- Use dividend/split-adjusted closes or your returns will be wrong.
+
+> **Correction note (v0.2.0):** v0.1.0 credited each new position with the signal bar's own price move. That is look-ahead bias — the signal only exists after the bar closes — so v0.1.0 results were overstated. v0.2.0 fixes the execution timing and adds regression tests pinning the corrected behavior. If you published numbers computed with v0.1.0, re-run them.
+
+## Data
+
+The repo ships **no real market data**. `synthetic_bars()` generates a deterministic seeded random walk for examples and tests — reproducible forever, and clearly labeled synthetic. Never publish performance numbers computed on it as if they were real.
+
+For real data:
+- `fetch_stooq(symbol)` — free daily bars from Stooq, no API key. **Split-adjusted but NOT dividend-adjusted**: fine for experimenting, not for publishing numbers.
+- `load_json()` / `load_csv()` — bring your own dividend/split-adjusted closes.
 
 ## Write your own strategy
 
@@ -48,27 +59,17 @@ from stratiq_backtest import Strategy
 class MyStrategy(Strategy):
     def on_bar(self, i, data, position):
         # i: current bar index, data.closes / data.dates available.
-        # Return 1 for long, 0 for cash. Only past and present bars
-        # are visible — peeking at the future is impossible by design.
+        # Return 1 to be long, 0 for cash. The new position takes
+        # effect AFTER bar i's close (see execution semantics above).
         ...
 ```
 
-## Methodology (read this before quoting numbers)
+Warm up indicators with `warmup=` so signals only fire on fully-formed values.
 
-- **Long-only, fully invested or in cash.** No leverage, no shorting.
-- **Signals trade at the closing price of the signal bar**, and the new position earns that bar's move. A stricter convention (enter next bar) would show slightly lower returns; we document our choice instead of hiding it.
-- **No commissions, no slippage, no taxes modeled.** Real trading does worse by roughly those costs.
-- **Use dividend/split-adjusted closes.** Unadjusted data silently deletes dividend returns and makes the past look worse than it was. The bundled QQQ sample is dividend-adjusted.
-- **Few trades = thin evidence.** Our headline example makes 4 trades in 7 years. That's honest, and it's thin — treat it accordingly.
+## Tests
 
-## What's in the box
+```bash
+python3 -m pytest tests/
+```
 
-- `backtest.run` — the event loop
-- `strategy.CrossoverStrategy` — fast/slow moving-average crossover
-- `indicators` — SMA, EMA, RSI, ATR
-- `data` — JSON/CSV loaders + free Stooq downloader (no API key)
-- `stats.summarize` — returns, CAGR, max drawdown, win rate, time in market, buy-and-hold comparison, full trade list
-
-## License
-
-MIT — use it, fork it, tell us when it proves you wrong.
+Happy paths, failure modes, edge cases — including regression tests that pin the no-look-ahead contract above.
