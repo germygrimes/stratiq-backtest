@@ -48,8 +48,34 @@ python3 examples/golden_cross_synthetic.py
 The repo ships **no real market data**. `synthetic_bars()` generates a deterministic seeded random walk for examples and tests — reproducible forever, and clearly labeled synthetic. Never publish performance numbers computed on it as if they were real.
 
 For real data:
-- `fetch_stooq(symbol)` — free daily bars from Stooq, no API key. **Split-adjusted but NOT dividend-adjusted**: fine for experimenting, not for publishing numbers.
+- `fetch_yahoo(symbol)` — free daily bars from Yahoo Finance's chart API, adjusted close (dividend- and split-adjusted). Unofficial endpoint; fails loudly.
+- `fetch_stooq(symbol)` — free daily bars from Stooq, no API key. **Split-adjusted but NOT dividend-adjusted**: fine for experimenting, not for publishing numbers. (As of 2026-11 Stooq serves a JavaScript browser check to plain HTTP clients, so this path currently fails live; `fetch_yahoo` is the working one.)
 - `load_json()` / `load_csv()` — bring your own dividend/split-adjusted closes.
+
+## Use it inside your AI assistant (MCP)
+
+The engine ships an [MCP](https://modelcontextprotocol.io) server, so Claude, Claude Code, Cursor, and other MCP clients can backtest inside the conversation — every result arrives with buy-and-hold next to it, the full trade log, the data caveats, and a link to test your own rule.
+
+```bash
+python3 -m stratiq_backtest.mcp_server
+```
+
+MCP client config (stdio):
+
+```json
+{
+  "mcpServers": {
+    "stratiq-backtest": {
+      "command": "stratiq-backtest-mcp"
+    }
+  }
+}
+```
+
+Tools:
+
+- `backtest_crossover` — `{ticker, fast=50, slow=200, start="2019-01-01"}`. Real daily bars via Yahoo Finance's adjusted-close series (dividend- and split-adjusted — the result carries its data caveats in the result).
+- `stratiq_track_record` — StratIQ's live graded record, fetched from stratiqai.app at call time. If the feed is unreachable it returns the page link and **no numbers** — a stale record is worse than none.
 
 ## Write your own strategy
 

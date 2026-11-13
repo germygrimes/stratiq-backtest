@@ -6,7 +6,7 @@ the README and every number the engine prints can be traced to a trade.
 """
 
 from .backtest import BarData, BacktestResult, Strategy, Trade, run
-from .data import fetch_stooq, load_csv, load_json
+from .data import fetch_stooq, fetch_yahoo, load_csv, load_json
 from .indicators import atr_series, ema_series, rsi_series, sma
 from .stats import max_drawdown, summarize
 from .strategy import CrossoverStrategy
@@ -21,6 +21,7 @@ __all__ = [
     "atr_series",
     "ema_series",
     "fetch_stooq",
+    "fetch_yahoo",
     "load_csv",
     "load_json",
     "max_drawdown",
@@ -31,4 +32,4 @@ __all__ = [
     "synthetic_bars",
 ]
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
