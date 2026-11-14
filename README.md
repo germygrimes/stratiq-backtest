@@ -34,6 +34,48 @@ Run the bundled example (golden cross on synthetic data):
 python3 examples/golden_cross_synthetic.py
 ```
 
+## A real example, with real output
+
+Golden cross (50/200 SMA) on DIA, Yahoo Finance dividend/split-adjusted
+daily closes, 2019-01-02 → 2026-11-06 (test window starts 2019-10-16,
+after the 200-day warmup):
+
+```python
+from stratiq_backtest import CrossoverStrategy, run, summarize, fetch_yahoo
+
+data = fetch_yahoo("DIA", end="2026-11-06")
+strat = CrossoverStrategy(fast=50, slow=200)
+stats = summarize(data, run(data, strat, warmup=strat.warmup))
+```
+
+| | Golden cross | Buy-and-hold |
+|---|---|---|
+| Total return | +81.0% | +115.2% |
+| CAGR | 8.8% | 11.5% |
+| Max drawdown | −16.0% | −36.7% |
+
+3 trades, all winners (win rate 100.0%, average win +21.98%), 75.0% of
+the time in the market. $10,000 became $18,100 following the rule vs
+$21,520 holding. The rule never lost a trade in seven years — and still
+finished 34 points behind, because it sat out a quarter of a long bull
+market. That is the honest shape of this signal, and it is why every
+result this engine returns carries buy-and-hold next to it.
+
+Full trade log:
+
+1. 2020-07-30 @ 236.18 → 2022-03-11 @ 304.51 — +28.93%
+2. 2022-12-12 @ 319.02 → 2025-04-22 @ 383.22 — +20.12%
+3. 2025-07-10 @ 438.22 → 2026-11-06 @ 512.22 — +16.89% (still open at the final close, marked at that close)
+
+Cross-check: this is StratIQ's published backtest of the same rule —
+https://stratiqai.app/published-backtests/golden-cross-dia — and the
+numbers above reproduce it exactly. No commissions, slippage, or taxes
+are modeled (see "Execution semantics"); 3 round trips of real costs
+would trim the result slightly.
+
+Prefer not to install anything? The same engine runs behind a web form:
+[Test-My-Rule](https://stratiqai.app/test-my-rule?src=hn) — name a rule, get the receipts vs buy-and-hold.
+
 ## Execution semantics (read this before trusting a number)
 
 - **Trades print at the close of the bar that generates the signal.** The strategy sees bar *i*'s close; the trade executes at bar *i*'s close.
