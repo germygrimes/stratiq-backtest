@@ -4,6 +4,10 @@ A tiny, honest backtesting engine. Long-only signal backtests with full trade lo
 
 This is the engine behind [StratIQ's public track record](https://stratiqai.app/track-record), where every backtest is published with wins and losses.
 
+![Demo: pip install, then the DIA golden-cross backtest running — the rule made +81.0% and still trailed buy-and-hold at +115.2%](docs/demo.gif)
+
+_The demo runs [`examples/golden_cross_dia.py`](examples/golden_cross_dia.py) on real DIA data — the worked example below, with the receipts._
+
 ## Install
 
 ```bash
